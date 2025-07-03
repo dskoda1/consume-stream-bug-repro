@@ -1,17 +1,17 @@
-import { streamText } from 'ai';
+import { streamText, convertToModelMessages, UIMessage } from 'ai';
 import { openai } from '@ai-sdk/openai';
 
 export async function POST(req: Request) {
-    const { messages } = await req.json();
-    req.signal.addEventListener("abort", () => {
-        console.log("aborted")
-      });
+    const { messages }: { messages: UIMessage[] } = await req.json();
+    // req.signal.addEventListener("abort", () => {
+    //     console.log("aborted")
+    //   });
   
     console.log("Starting stream")
     const result = streamText({
       model: openai('gpt-4o'),
-      messages,
-      abortSignal: req.signal,
+      messages: convertToModelMessages(messages),
+      // abortSignal: req.signal,
       onChunk: (chunk) => {
         console.log({chunk})
       },
@@ -24,5 +24,5 @@ export async function POST(req: Request) {
     // during a long stream the api route is immediately ended and "aborted" is logged
     result.consumeStream();
 
-    return result.toDataStreamResponse();
+    return result.toUIMessageStreamResponse();
   }
